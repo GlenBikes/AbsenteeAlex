@@ -1,0 +1,40 @@
+{
+  "name": "gomix-twitterbot",
+  "version": "0.0.1",
+  "description": "Beep beep tweet!",
+  "main": "server.js",
+  "scripts": {
+    "start": "node start.js",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "@babel/core": "*",
+    "@babel/register": "*",
+    "@babel/preset-env": "*",
+    "@babel/runtime": "*",
+    "@babel/plugin-transform-runtime": "*",
+    "express": "^4.14.0",
+    "interface.js": "^2.0.0",
+    "json2html": "*",
+    "mocha": "^6.2.1",
+    "n-readlines": "*",
+    "request": "^2.88.0",
+    "prepend-file": "*",
+    "soap": "*",
+    "twit": "^2.1.0",
+    "xml-js": "*"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "repository": {
+    "url": ""
+  },
+  "keywords": [
+    "node",
+    "gomix",
+    "twitter",
+    "twitterbot",
+    "bot"
+  ]
+}
