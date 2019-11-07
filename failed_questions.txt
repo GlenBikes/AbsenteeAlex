@@ -1,0 +1,68 @@
+Tweet: id: 1192132429529538600, id_str: 1192132429529538560, user: thename, in_reply_to_screen_name: KarlAlexPauls, in_reply_to_status_id: 1191964794338861000, in_reply_to_status_id_str: 1191964794338861056, @KarlAlexPauls @SeattleTRU So better to scuttle it and go with the @AbsenteeAlex / Orion view? https://t.co/RpU3ZmGnB3
+Tweet: id: 1192077450370408400, id_str: 1192077450370408452, user: GlenBikes, in_reply_to_screen_name: zachlubarsky, in_reply_to_status_id: 1191950241118986200, in_reply_to_status_id_str: 1191950241118986240, @zachlubarsky @cmkshama How is @thehoffather going to be able to tow that many RVs to CM houses?
+
+I assume none are going to @AbsenteeAlex’s house?
+Tweet: id: 1192071945497374700, id_str: 1192071945497374720, user: GlenBikes, in_reply_to_screen_name: null, in_reply_to_status_id: null, in_reply_to_status_id_str: null, How many will we have #seaelex? I think CMT is. Any of our new CM’s in this majority renter city who can push hard against @AbsenteeAlex’s racist classist policy positions? https://t.co/nt15aXRPfI
+Tweet: id: 1191607359837048800, id_str: 1191607359837048832, user: GlenBikes, in_reply_to_screen_name: Seattle4Strauss, in_reply_to_status_id: null, in_reply_to_status_id_str: null, @Seattle4Strauss last stretch campaign slogan:
+
+"Not quite as corrupt as @AbsenteeAlex! And I'm honest about my corruption!"
+
+So vote @Seattle4Strauss. He's at least not as corrupt as @HeidiforCouncil.
+
+Great to be a D6 voter this election. https://t.co/LMaGvlr71z https://t.co/SmVGFrJK4F
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: 1190140979258355700, id_str: 1190140979258355713, user: transitrunner, in_reply_to_screen_name: AbsenteeAlex, in_reply_to_status_id: 1190139504448790500, in_reply_to_status_id_str: 1190139504448790528, @AbsenteeAlex @NoSpandexReq @SeattleTRU Sir, where do you rank pedestrians on your scale? @AbsenteeAlex
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: -1, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+Tweet: id: Hey Alex, why don't you ever show up?, id_str: , user: , in_reply_to_screen_name: undefined, in_reply_to_status_id: undefined, in_reply_to_status_id_str: undefined, 
+@AbsenteeAlex @OGSavageFe @rafaeldourado @dualcastO3O @AJCARTERTV @softkyun6 @EtniesJags @WebOFriends @aaaigooo @P_I_Grammy @_Kindasweet @phalynn_ @tunaeP_ @Vitricate @Egotisticalisms @ChevChellios510 @ehnyay @rhian74847655 @_DREGANOMICS @PRabidus https://t.co/KOXpT71wnH
+Hey @AbsenteeAlex: what is the appropriate amount of elevation gain that a bike rider should be forced to suffer through to access businesses in your district from a safe bike route?
