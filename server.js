@@ -1,31 +1,21 @@
 // Exported functions
 module.exports = {
   _chompTweet: chompTweet,
-  _defaultReply: defaultReply,
   _GetRandomReply: GetRandomReply
 };
 
-var matches = /\bshaun scott\b/i.exec("Shaun Scott blah");
-var result = "did not match";
-
-if (matches != null && matches.length == 1) 
-{
-  result = 'matched'
-} else {
-  result = 'did not match'
-}
-console.log(`${result}`);
-
 /* Setting things up. */
-var fs = require('fs'),
+const fs = require('fs'),
   path = require('path'),
   express = require('express'),
   app = express(),   
   soap = require('soap'),
+  string_utils = require('./utils/stringutils.js'),
   Twit = require('twit'),
   convert = require('xml-js'),
-  Mocha = require("mocha"),
-  config = {
+  Mocha = require("mocha");
+
+const config = {
   /* Be sure to update the .env file with your API keys. See how to get them: https://botwiki.org/tutorials/make-an-image-posting-twitter-bot/#creating-a-twitter-app*/      
     twitter: {
       consumer_key: process.env.CONSUMER_KEY,
@@ -37,21 +27,84 @@ var fs = require('fs'),
   T = new Twit(config.twitter),
   maxIdFileLen = 100,
   maxErrorFileLen = 100,
-  unrecognizedQuestionFileLen = 500,
-  unrecognizedQuestionFile = "unrecognized_questions.txt",
+  failedQuestionsFileLen = 500,
+  failedQuestionsFile = "failed_questions.txt",
   lastDMFilename = "last_dm_id.txt",
   lastMentionFilename = "last_mention_id.txt",
-  errorFilename = "error.txt";
+  errorFilename = "error.txt",
+  maxTweetLength = 280 - 17; // Max username is 15 chars + '@' plus the space after the full username
+;
+
+/* Once an hour, the bot will post a tweet (i.e. not a reply to another tweet)
+   giving deep thoughts from Alex's legislative aid Toby Thaler.
+*/
+var toby_thaler_prefixes = [
+  "As my legislative aid Toby Thaler, who's totally not racist or classist, has said before:\n\n",
+  "Remember Seattle, according to my legislative aid Toby Thaler, who's totally not racist or classist:\n\n",
+  "Seattle, if you're wondering if I will represent you, just remember what my legislative aid Toby Thaler, who's totally not racist or classist, previously said:\n\n",
+  "Here's a great quote from my legislative aid Toby Thaler, a thought leader in Seattle who is totally not racist, classist or a social media troll:\n\n"
+];
+
+var toby_thaler_quotes = [
+  "\"Seattle, like the rest of the planet, has limited carrying capacity. You are the fucking idiot.\"",
+  "\"You are truly a fucking idiot as well as rude asshole. Truly, madly, deeply a proponent of reactionary bullshit.\"",
+  "\"You don’t know shit about me, asshole. Maybe if you used your great intellect and actually read my posts you’d realize your statement is incorrect.\"",
+  "\"If you mean “do nothing about rental housing that presents health and safety risks” that’s the only conclusion I can see in your posts other than that you cannot put six words together without being an asshole.\"",
+  "\"I do not think \“switching to less destructive forms of energy and production\” can solve the crisis without also reducing human population. Even if we all returned to some pseudo agrarian utopia and became 90% vegetarian, I don’t think there are enough resources on the planet to sustain 8 or 9 billion people.\"",
+  "\"If I had dictatorial power: No development activity or economic activity is allowed unless it can show with a high degree of certainty that the activity won’t have an adverse impact on the commons. We have screwed up so much already, it’s a high burden. We’re out of time, folks. Population needs to be reduced (most scientists say we’re beyond Earth’s carrying capacity), but that probably solves itself if we attain full equality, civil rights, education access, etc. for every human born.\"",
+  "\"Regardless, the bottom line is the bottom line: How much population growth are we going to tolerate before we realize that ever more not only leads to unacceptable consequences but is also physically impossible?\"",
+  "\"Oh, so you think growth is sustainable? Do you really believe there are no limits to growth? Just for clarity: by growth I mean an increase in the number of people needing to be fed, housed, clothed, educated, and entertained in any particular ecosystem.\"",
+  "\"Far be it from me to \"keep this barbed wire up to keep others out\" -- I just want some real democracy in the policy making for dealing with the growth that occurs until we either attain a truly sustainable economy, or the economy/civilization collapses due to overshoot and/or inequity. The ultimate and barely spoken issue is over population. If l really was the sky Dog, I'd make people stop bleeding after one per couple. At least until we got back down to a more truly sustainable population, like maybe a billion or two.\"",
+  "\"Where between 750,000 and 14,000,000 does Seattle want to be? Do the growth addicts really think there are no limits?\"",
+  "\"You don’t know shit about me, asshole. Maybe if you used your great intellect and actually read my posts you’d realize your statement is incorrect.\"",
+  "\"You really don’t get it. You’re addicted to growth. Get help.\"",
+  "\"It’s blanket up zones with no effective voice at the table that causes the most opposition. In fact the table has been dismantled and no longer exists. When we had neighborhood planning a great deal of increased density was provided for.\"",
+  "\"What are you, a brownshirt fascist thug?\"",
+  "\"In addition to being an obnoxious troll, you are sick with logorrhea.\"",
+  "\"I am not opposed to changes in zoning to make building housing easier. If you had a clue on how to be at least diplomatic (not even asking for polite, let alone cordial), you might figure out where people like me are willing to go along with you to the Council to actually make changes happen. However, you are such an (anonymous) asshole that it appears you are incapable of doing any of that. Happy New Year. P.s. Applies to your friend as well.\"",
+  "\"You still haven’t answered; what race/ethnicity do you consider yourself?\"",
+  "\"I have been blocked by urbanists on facebook because I'm \"a sick person\" who \"hopes for society's collapse\". But I still try to engage, even with the most offensive anonymous trolls like urbanista. And I don't think all \'urbanists\' are like him (gender presumed); we're all prone to do it, but generalizing is a dangerous game. (I did it in the post just above! but at most it was aimed at the ideology not particular persons.\"",
+  "\"And you are ignorant: calling you stupid is no ad hominem. Look it up. Look up something anything.\"",
+  "\"I totally support eh Stone Way road diet. But I’m voting no on Move Seattle. For a billion bucks we should be getting some serious capital fixes, not road diets and new paving on arterials.\"",
+  "\"The real issue IMO is when are we going to acknowledge, let alone act on the fact, that we are past the point when further growth makes any sense.\"",
+  "\"\“There is literally not enough housing.\” I don’t believe this is accurate. The problem is misallocation of wealth, not housing. It’s just like food: There is enough food in the world for everyone, but there are starving people.\"",
+  "\"\"Homeownership is a key for neighborhood quality,\" said Toby Thaler, president of the Fremont Neighborhood Council, who was critical of a lot of the recommendations made to add density to single-family zones. \"If you let the entire single-family zones become rental, the cohesion of the neighborhoods, especially the close-in ones, is essentially going to get eroded away. It's a disturbing trend and it's part of the whole erosion of homeownership.\"",
+  "\"I’m not going to read a long piece by you as justification for your position.\"",
+  "\"I am an experienced lawyer and political actor. I do not engage in such discussions with my mind closed or set on any specific point \“by definition.\”\"",
+  "\"Density is not a good policy response if the problem you're trying to solve is anthropogenic global warming.\"",
+  "\"I disagree with your facile conclusion (\"the restrictions on multi family development in this neighborhood are the legacy of a racist white property-owning class\"). First, there is no restriction on MF development \"in this neighborhood.\" (And BTW, which specific \"neighborhood\" do you mean? Seattle?) And the connection of the current growth boom and its impacts to past racist red-lining and other practices is nonexistent. It's the big lie of Mayor Murray's HALA.\"",
+  "\"I far prefer a bit of Fremont bud.\"",
+  "\"The capacity is there, and it's being used in case you haven't noticed. You just don't like where it is. Do you keep your eyes closed while moving around the city?\""
+];
 
 /*
   Once an hour, the bot will post a tweet (i.e. not a reply to another tweet).
-  It picks a random entry from this list.
+  It picks a random entry from each of these lists and concatenates them together.
 */
-var deepThoughts = [
-  "Remember Seattle: Vote for me to ensure that @Amazon didn't waste $1.45 million.",
+var deep_thought_prefixes = [
+  "Seattle: ",
+  "Hey Seattle! ",
+  "Remember Seattle: ",
+  "Don't forget Seattle: ",
+  "Seattle voters: ",
+  "Seattle progressives: "
+];
+
+var deep_thoughts = [
+  "Thank you for voting for me or at least not voting for @ElectScott2019. Also a big shout out to @RepJayapal for effectively endorsing me. I couldn't have done it w/o you. Voters: See you in 2023.",
+  "Thank you for electing me. Now I no longer have to pretend to GAF about any of you non white or non-wealthy or non-homeowning non-car-driving miscreants who want to whine to me about inequity. Deal with it. I'll see you in summer 2023."
+  /*
+  "Vote for me to ensure that @Amazon didn't waste $1.45 million.",
   "I am totally against big money in politics even though I applied for @SeattleChamber endorsement, knowing they would dump truckloads of money into my campaign.",
-  "Wondering who to vote for in D4? Why not the candidate endorsed by local hate group Safe Seatte? Alex Pedersen: A favorite of hate groups since 2019.",
-  "The news media has been relentlessly attacking me, saying that I can't be bothered to show up at candidate forums, not even those put on by SPOG, @MASSCoalition,... This is true, but the reason is I just DGAF about the voters.\n\nVote Alex Pedersen!"
+  "Wondering who to vote for in D4? Why not the candidate endorsed by local hate group Safe Seatte?\n\nAlex Pedersen: A favorite of hate groups since 2019.",
+  "The news media has been relentlessly attacking me, saying that I can't be bothered to show up at candidate forums, not even those put on by SPOG, @MASSCoalition,... This is true, but the reason is I just DGAF about the voters.\n\nVote Alex Pedersen!",
+  "Miss out asking me about my policy positions cause I skipped most candidate forums? Fear not Seattle! Just go to my campaign site where I lay out in excruiatingly vague language how I will do all this very expensive stuff w/o taxing @Amazon. https://electalexpedersen.org/accountability/",
+  "Vote for Alex Pedersen or Uncle Jeff will make sure your #AmazonPrime next day deliveries will be routed through Uzbekistan, Belarus and Bhutan.",
+  "My @CityCouncil seat is bought and paid for by @JeffBezos, so why not vote for the candidate who's gonna winx?",
+  "Vote for Alex Pedersen or Jeff will make sure your #AmazonPrime free shipping costs $12.",
+  "Vote for Alex Pedersen or Uncle Jeff will make sure no matter what web site you visit, you will see nothing but this #AmazonChoice ad: https://www.amazon.com/Hutzler-571-Banana-Slicer/dp/B0047E0EII/ref=cm_cr_pr_product_top",
+  "Do you want the price of your @Starbucks coffee to go up to $16 and your @Amazon #Prime membership to be $499? No? Then vote for Alex Pedersen in D4. Trust the billion and trillion $$ companies and our city's oligarchs. They have your best interests at heart."
+  */
 ];
 
 
@@ -72,8 +125,41 @@ var regexes = {
     /\bhomelessness\b/i,
     /\bhomeless\b/i
   ],
+  'visionzero': [
+    /\bvisionzero\b/i,
+    /\bsafety\b/i
+  ],
+  'transportation': [
+    /\btransportation\b/i,
+    /\bSDOT\b/i,
+    /\btraffic\b/i,
+    /\bcongestions\b/i,
+    /\bmaster plan\b/i,
+    /\btransit\b/i,
+    /\bSoundTransit\b/i,
+    /\bSound Transit\b/i,
+    /\brail\b/i,
+    /\bpedestrian\b/i,
+    /\bscooter\b/i,
+    /\bwalk\b/i,
+    /\bparking\b/i
+  ],
+  'bike': [
+    /\bbike lanes\b/i,
+    /\bbike\b/i,
+    /\bbicycle\b/i,
+    /\bBMP\b/i
+  ],
   'Amazon': [
-    /\bamazon\b/i
+    /\bamazon\b/i,
+    /\bbezos\b/i
+  ],
+  'racism': [
+    /\bracism\b/i,
+    /\brace\b/i
+  ],
+  'joke': [
+    /\bjoke\b/i
   ],
   'PAC': [
     /\bPAC\b/i,
@@ -109,61 +195,86 @@ var regexes = {
 */
 var responses = {
   'shaunscott': [
-    "Remember not to vote for @ElectScott2019 or you'll end up with a councilmember for D4 who will represent the entire district rather than just representing @Amazon and the largely older, largely whiter, D4 landowners."
-  ],
+    "You seem to be asking about @ElectScott2019 who obviously doesn't matter since he couldn't find a trillionaire to buy him a council seat. If you have interest in Scott, I don't wanna listen 2 u. Talk to me in summer 2023 when I might need your vote.",
+    "Luckily @JeffBezos bought the election out from under @ElectScott2019. Can you imagine if the actual voters had been allowed to decide who represents them? That ridiculous socialist would be running amok around city hall representing everyone come January."
+    /*
+    "Remember not to vote for @ElectScott2019 or you'll end up with a councilmember for D4 who will represent the entire district rather than just representing @Amazon and the largely older, largely whiter, D4 landowners.",
+    "@ElectScott2019 may have great sweaters and 100's of people doing a ground game that brings a tear to @AOC's eye... but I have gobs of @JeffBezos' money. Vote Alex Pedersen!"
+    */
+],
   'housing': [
-    "Housing affordability is a huge issue in Seattle. But I DGAF cause I have a house and @SeattleChamber @Amazon are buying me a council seat which means I'll also have a job. Something something communities of color and displacement. Council must live within its means. https://electalexpedersen.org/accountability-for-affordability/",
-    "While I fully support @MayorJenny's process of spending $10M/year to sweep homeless people around the city and not actually accomplish anything, I also... wait... lost my train of though there. Something something accountability something audit. https://electalexpedersen.org/accountability-and-homelessness/"
+    "Housing's huge issue in Seattle. But I DGAF cause I have a house & @SeattleChamber @Amazon're bought me a council seat. Go away. Maybe in summer 2023 I'll need your vote. Probably not cause @JeffBezos'll buy my seat again.",
+    "I fully support @MayorJenny's process of spending $10-20M/yr to sweep homeless people around city & accomplish nothing, I also... wait... lost my train of thought. Something something accountability something audit.",
+    "I would direct you to my campaign website to read about my housing policy positions, but I'm about to delete it just like I deleted all my anti-#transit, anti-city blog posts when I decided to run."
   ],
   'homelessness': [
-    "My plan for addressing homelessness is pretty simple: arrest all the people who are homelss, but say a bunch of compassionate buzzwords and wqave my hands if anyone asks how I'm planning to pay to lock up 1000's of people just because they happen to be poor. https://electalexpedersen.org/accountability-and-homelessness/",
-    "While I fully support @MayorJenny's process of spending $10M/year to sweep homeless people around the city and not actually accomplish anything, I also... wait... lost my train of though there. Something something accountability something audit. https://electalexpedersen.org/accountability-and-homelessness/"
+    "My plan to address homelessness is simple: arrest all people who're homeless, but say compassionate buzzwords & wave my hands if anyone asks how I'm planning to pay to lock up 1000's of people just because they happen to be poor.",
+    "While I fully support @MayorJenny's process of spending $10-20M/year to sweep homeless people around the city and not actually accomplish anything, I...wait...lost train of thought. Something something accountability something audit."
+  ],
+  'visionzero': [
+    "#VisionZero is a socialist plot from Scandinavia. They actually stopped killing people who are not in cars! Clearly we can't do that. People who're not in cars include cyclists (who I love, I once rode a bike). Not everybody can ride a bicycle so nobody should.",
+    "Look, I am all for stopping killing people. But not if it means boomers like me have to spend a couple more seconds driving to the dry cleaners.\n\nVote Alex Pedersen!"
+  ],
+  'transportation': [
+    "Visionary transpo plan: New bldgs must have massive amounts of #parking so poor people're priced out. No bike lanes anywhere. Nix those red bus lanes I can't drive alone in. And WTF w #DecongestionPricing? No way! The future of the city's people alone in cars."
+  ],
+  'bike': [
+    "Go away. Cyclists don't vote."
+  ],
+  'racism': [
+    "This is Seattle, we're all progressives here. Something something single family zoning has nothing to do with racism. Have you noticed that in all my campaign ads (and those paid for by Amazon) I am very white and very smiley? My council page will be the same.",
+    "It's totally racist to ask a white man about racism. This is Seattle, nobody's racist here. Especially not the PACs who bought the white smiling man a seat on @SeattleCouncil."
+  ],
+  'joke': [
+    "A joke? Here's a good one:\n\nKnock knock!\nWho's there?\nAlex Pedersen.\nAlex Pedersen who?\nAlex Pedersen who @JeffBezos bought a seat on @SeattleCouncil for.\n😂🤣😂🤣😂🤣😂🤣",
+    "Sure, I love jokes.\n\nHow many trillion dollar companies who pay no federal income tax does it take to buy Alex Pedersen a @SeattleCouncil seat?\n\nJust one!\n😂🤣😂🤣😂🤣😂🤣",
+    "OK, here's a good one:\n\nWhat has a closet full of sweaters and the support of the majority of D4?\n\nThe guy who @JeffBezos didn't buy a @SeattleCouncil seat for. Sucker!\n😂🤣😂🤣😂🤣😂🤣"
   ],
   'PAC': [
-    "I am totally against PACs. I can't help it that the endorsements I applied for such as @SeattleMayorTim and @SeattleChamber are really just fronts for dumping money into local conservacandidate campaigns.",
-    "I totally do not coordinate with any of the PACs that are spending truckloads of money to buy me a seat on @SeattleCouncil."
+    "I am totally against PACs. I can't help it that the endorsements I applied for such as @SeattleMayorTim and @SeattleChamber were really just fronts for dumping money into local conservacandidate campaigns. How was I to know?",
+    "I totally did not coordinate with any of the PACs that spent truckloads of money to buy me a seat on @SeattleCouncil. Not even the ones who used my official campaign art or the one's who'll pay people to chase down ballots if needed."
   ],
   'CASE': [
-    "I am not familiar with CASE. Is that a conservative PAC that is trying to buy an entire @SeattleCouncil? Never heard of them.",
-    "Seattle: Remember to vote for the D4 candidate that @SeattleChamber (aka @Amazon) has dumped 100's of 1000's of $$$ to buy a seat. Alex Pedersen."
+    "I am not familiar with CASE. Is that a conservative PAC that bought my @SeattleCouncil seat by laundering @JeffBezos' money? Never heard of them."
   ],
   'CAPE': [
-    "Remember Seattle: Don't vote for any candidate endorsed by @capecampaigns. This is a big money group, probably funded by Soros, trying to buy an election. Unlike @SeattleChamber who are totally the good guys.",
-    "You seem to be asking about @capecampaigns. They want you to vote for @ElectScott2019 which you should totally not do. I would've told you that at the candidate forums but couldn't be bothered to go.",
-    "Definitely do not vote for @ElectScott2019 as @capecampaigns wants you to. If you do, you'll end up with a councilmember who actually listens to everyone and has plans. Who needs plans when you have @Amazon's money?"
+    "You seem to be asking about Civic Alliance for a Progressive Economy. They lost. Deal with it."
   ],
   'Amazon': [
-    "I buy all my campaign signs on @Amazon",
-    "I didn't take money from @Amazon! Amazon gave $1.45M to @SeattleChamber and @SeattleChamber is kindly spending a bunch of it to buy my council seat. But I will listen to all voices. For sure.",
+    "I buy all my elections on @Amazon",
+    "I didn't take money from @Amazon! Amazon gave $1.45M to @SeattleChamber and @SeattleChamber kindly laundered it for @SeattleMayorTim to buy my @SeattleCouncil seat.",
     "Sorry I didn't catch that. I had too much of @JeffBezos' money in my ears.",
-    "I will listen to all voices. As long as those voices are telling me to do what my evil corporate overlord wants me to do. Other than that though... all voices. Especially wealthy white landowning voices of the boomer persuasion since their voices should obvs carry more weight than yours."
+    "I will listen to all voices. As long as they're telling me to do what my evil corporate overlord wants me to. Other than that though... all voices. Especially wealthy white landowning voices of boomer persuasion since their voices obvs carry more weight than yours."
   ],
   'absent': [
-    "I'll listen to all voices. Except for the people at forums I've missed like @MASSCoalition, @Tech4Housing, #homelessness, @UrbanistOrg, @RootedInRights, ..."
+    "I'll listen to all voices. Except for the people at forums I missed like @MASSCoalition, @Tech4Housing, #homelessness, @UrbanistOrg, @RootedInRights, ... Those people are whack and want @SeattleCouncil to represent the whole city."
   ],
   'why': [
     "Why? Because I can't be bothered."
   ],
   'when': [
-    "When? I'll get back to you after the election. Until then remember to vote for @AbsenteeAlex!"
+    "When? I'll get back to you the next time I need your vote. But that's probably never cause in 2023, I'm sure my good friend @JeffBezos, whose bidding I'll do for the next 4 years, will buy my seat for me again."
   ]
 };
-
+ 
 // Export these for testing
 module.exports._regexes = regexes;
 module.exports._responses = responses;
 
 console.log(`${process.env.TWITTER_HANDLE}: start`);
-/*
-logTweetById("1184633776762228736");
-logTweetById("1184633777714335746");
-logTweetById("1184651910126530560");
-*/
 
 
-var maxTweetLength = 280;
 var tweets = [];
-function defaultReply () { return "I don't understand your question. But why don't we meet at the next candidate forum and talk in person? Or not. I may just not show up." }
+var defaultReplies = [
+  "I don't understand your question. But why don't we meet at the next candidate forum and talk in person? Or not. I may just not show up. In the meantime.. https://electalexpedersen.org/accountability/",
+  "I'm not sure what you're asking. But since you don't appear to be asking about preserving neighborhood character, letting neighborhoods veto housing, bike lanes and safe streets, I'm just going to ignore you.\n\nRemember to vote Alex Pedersen! Read more here: https://electalexpedersen.org/accountability/",
+  "What are you trying to get at? Do you want to hear a vague description of how I will do something very expensive to solve one of the key problems facing Seattle w/o taxing @Amazon? It's all here: https://electalexpedersen.org/accountability/",
+  "It sounds like you want to hear some vague detail-free descriptions of how I'll solve all problems facing Seatting by simply making sure all voices in neighborhoods (at least white boomer landowners) feel they've been heard. Read more here: https://electalexpedersen.org/accountability/"
+];
+
+module.exports._defaultReplies = defaultReplies;
+
+
 var noCitations = "No citations found for plate # ";
 var noValidPlate = "No valid license found. Please use XX:YYYYY where XX is two character state/province abbreviation and YYYYY is plate #";
 var parkingAndCameraViolationsText = "Total parking and camera violations for #";
@@ -221,14 +332,20 @@ app.all("/reply", function (request, response) {
           */
           const {chomped, chomped_text} = chompTweet(status);
 
+          debugger;
           if (!chomped || botScreenNameRegexp.test(chomped_text)) {
             /* Don't reply to our own tweets. */
             if (status.user.id == app_id) {
               console.log('Ignoring our own tweet: ' + status.full_text);
             }
+            else if (status.hasOwnProperty('retweeted_status')) {
+              // This is just a retweet. Ignore it because the full_text would
+              // be the full_text of the original tweet.
+              console.log(`Ignoring retweet: ${status.full_text}.`);
+            }
             else {
               // OK, process this one.
-              var reply = [ GetRandomReply(status.full_text)];
+              var reply = [ GetRandomReply(status) ];
               
               SendResponses(status, reply, true);
             }
@@ -291,12 +408,32 @@ app.all("/tweet", function (request, response) {
   var now = new Date();
   var currentHour = (now.getHours() + 24 - 7) % 24;
   
-  console.log(`Current hour: ${currentHour}, full time: ${now}.`);
+  console.log(`Current hour: ${currentHour}.`)
   
-  if (currentHour >= 7 && currentHour <= 23) {
+  if (currentHour >= 5 || currentHour <= 2) {
     // tweet
-    console.log(`Would tweet.`);
-    TweetRandomThought();
+    TweetRandomThought(deep_thought_prefixes, deep_thoughts, true /* number_tweets */ );
+  }
+  else {
+    console.log("I woke up to tweet but decided to go back to sleep instead.");
+  }
+
+  response.sendStatus(200);
+});
+
+/* uptimerobot.com is hitting this URL once an hour during daytime hours. */
+app.all("/toby", function (request, response) {
+  var now = new Date();
+  var currentHour = (now.getHours() + 24 - 7) % 24;
+  
+  console.log(`Current hour: ${currentHour}.`)
+  
+  if (currentHour >= 5 || currentHour <= 2) {
+    // tweet
+    TweetRandomThought(toby_thaler_prefixes, toby_thaler_quotes, true /* number_tweets */ );
+  }
+  else {
+    console.log("I woke up to tweet but decided to go back to sleep instead.");
   }
 
   response.sendStatus(200);
@@ -355,6 +492,14 @@ app.all("/errors", function (request, response) {
   response.sendFile(fileName);
 });
 
+
+app.all("/failedquestions", function (request, response) {
+  var fileName = `${__dirname}/${failedQuestionsFile}`;
+
+  console.log(`Sending file: ${fileName}.`)
+  response.sendFile(fileName);
+});
+
 function chompTweet(tweet) {
   // Extended tweet objects include the screen name of the tweeting user within the full_text,  
   // as well as all replied-to screen names in the case of a reply.
@@ -374,27 +519,39 @@ function chompTweet(tweet) {
     chomped_text: text
   }
 }
-function TweetRandomThought() {
-  var tweet = deepThoughts[Math.floor(Math.random() * deepThoughts.length)];
+
+function TweetRandomThought( prefixes, tweets ) {
+  var prefix = prefixes[Math.floor(Math.random() * prefixes.length)],
+      thought = tweets[Math.floor(Math.random() * tweets.length)];
   
-  console.log(`Sending deep thought: ${tweet}.`)
-  SendTweet(tweet);
+  // When breaking these into tweetsm,
+  
+  const tweet_lines = string_utils._splitLines( [prefix + thought], maxTweetLength, true /* number_lines */ );
+  
+  console.log(string_utils._printObject(tweet_lines));
+  
+  SendResponses(null /* orig_tweet */, tweet_lines, true /* verbose */);
 }
 
-function GetRandomReply( tweet_text ) {
+function getDefaultReply () { 
+  var tweet = defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
+
+  console.log(`Choosing default reply: ${tweet}.`)
+  return tweet; 
+}
+
+
+function GetRandomReply( tweet ) {
+  var tweet_text = tweet.full_text;
   var reply;
 
   // Go through the regexes until we find one that matches
   for (const key in regexes) {
-    console.log(`key: ${key}.`);
-    
     if (reply) break;
     
     // Now go through the regexes under this key
     for (var i = 0; i < regexes[key].length; i++) {
       const regex = regexes[key][i];
-      console.log(`regex: ${regex}.`);
-
       const matches = regex.exec(tweet_text);
       
       if (matches && matches.length > 0) {
@@ -406,13 +563,11 @@ function GetRandomReply( tweet_text ) {
   }
   
   if (reply == null) {
-    console.log("returning default reply.");
-    reply = defaultReply();
+    reply = getDefaultReply();
     
     // Log this question to make it easy to review what people were asking.
+    logUnrecognizedQuestion(tweet);
   }
-  
-  console.log(`Returning '${reply}'`);
   return reply;
 }
 
@@ -440,19 +595,29 @@ function SendTweet( tweet ) {
 
 function SendResponses(origTweet, tweets, verbose) {
   var tweetText = tweets.shift();
-  var replyToScreenName = origTweet.user.screen_name;
-  var replyToTweetId = origTweet.id_str;
+  var replyToTweetId;
   
   try {
-    /* Now we can respond to each tweet. */
-    tweetText = "@" + replyToScreenName + " " + tweetText;
-    (new Promise(function (resolve, reject) {
+    if (origTweet) {
+      var replyToScreenName = origTweet.user.screen_name;
+      replyToTweetId = origTweet.id_str;
+      tweetText = "@" + replyToScreenName + " " + tweetText;
+    }
 
-      T.post('statuses/update', {
+    /* Now we can respond to each tweet. */
+    (new Promise(function (resolve, reject) {
+      console.log(`Tweeting (${tweetText.length}) characters: ${tweetText}.`);
+      
+      var params = {
         status: tweetText,
-        in_reply_to_status_id: replyToTweetId,
         auto_populate_reply_metadata: true
-      }, function(err, data, response) {
+      };
+      
+      if (origTweet) {
+        params.in_reply_to_status_id = replyToTweetId;
+      }
+      
+      T.post('statuses/update', params, function(err, data, response) {
         if (err){
           reject(err);
         }
@@ -467,9 +632,9 @@ function SendResponses(origTweet, tweets, verbose) {
       // of the tweets will not display for users other than the bot account.
       // See: https://twittercommunity.com/t/inconsistent-display-of-replies/117318/11
       if (tweets.length > 0) {
-        //sleep(500).then(() => {
+        sleep(2000).then(() => {
           SendResponses(sentTweet, tweets, verbose);
-        //});
+        });
       }
     }).catch( function ( err ) {
       handleError(err);
@@ -478,42 +643,6 @@ function SendResponses(origTweet, tweets, verbose) {
   catch ( e ) {
     handleError(e);
   }
-}
-
-/**
- * When investigating a selenium test failure on a remote headless browser that couldn't be reproduced
- * locally, I wanted to add some javascript to the site under test that would dump some state to the
- * page (so it could be captured by Selenium as a screenshot when the test failed). JSON.stringify()
- * didn't work because the object declared a toJSON() method, and JSON.stringify() just calls that 
- * method if it's present. This was a Moment object, so toJSON() returned a string but I wanted to see
- * the internal state of the object instead.
- * 
- * So, this is a rough and ready function that recursively dumps any old javascript object.
- */
-function printObject(o, indent) {
-    var out = '';
-    if (typeof indent === 'undefined') {
-        indent = 0;
-    }
-    for (var p in o) {
-        if (o.hasOwnProperty(p)) {
-            var val = o[p];
-            out += new Array(4 * indent + 1).join(' ') + p + ': ';
-            if (typeof val === 'object') {
-                if (val instanceof Date) {
-                    out += 'Date "' + val.toISOString() + '"';
-                } else {
-                    out += '{\n' + printObject(val, indent + 1) + new Array(4 * indent + 1).join(' ') + '}';
-                }
-            } else if (typeof val === 'function') {
-
-            } else {
-                out += '"' + val + '"';
-            }
-            out += ',\n';
-        }
-    }
-    return out;
 }
 
 function getLastDmId() {
@@ -546,7 +675,7 @@ function getLastIdFromFile(filename) {
         handleError(new Error(`Error: No last mention found: ${line}`));
       }
       else if (lastId == undefined) {
-        lastId = matches[1];
+        lastId = matches[1]; 
         break;
       }
     }
@@ -558,9 +687,9 @@ function getLastIdFromFile(filename) {
   return lastId;
 }
   
-function logUnrecognizedQuestion(question) {
-  console.log(`Writing unrecognized question: ${question}.`)
-  prependFile(unrecognizedQuestionFile, question, unrecognizedQuestionFileLen)
+function logUnrecognizedQuestion(tweet) {
+  console.log(`Writing unrecognized question: ${printTweet(tweet)}.`);
+  prependFile(failedQuestionsFile, printTweet(tweet), failedQuestionsFileLen);
 }
 
 function setLastDmId(lastDmId) {
@@ -632,7 +761,7 @@ function logTweetById(id) {
   var tweet = getTweetById(id);
   
   if (tweet) {
-    console.log(`logTweetById (${id}): ${printObject(tweet)}`);
+    console.log(`logTweetById (${id}): ${string_utils.printObject(tweet)}`);
   }
 }
 
