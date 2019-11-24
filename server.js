@@ -39,9 +39,9 @@ const config = {
    giving deep thoughts from Alex's legislative aid Toby Thaler.
 */
 var toby_thaler_prefixes = [
-  "As my legislative aid Toby Thaler has said before:\n\n",
-  "Remember Seattle, according to my legislative aid Toby Thaler:\n\n",
-  "Seattle, if you're wondering if I will represent you, just remember what my legislative aid Toby Thaler previously said:\n\n",
+  "As my legislative aid Toby Thaler, who's totally not racist or classist, has said before:\n\n",
+  "Remember Seattle, according to my legislative aid Toby Thaler, who's totally not racist or classist:\n\n",
+  "Seattle, if you're wondering if I will represent you, just remember what my legislative aid Toby Thaler, who's totally not racist or classist, previously said:\n\n",
   "Here's a great quote from my legislative aid Toby Thaler, a thought leader in Seattle who is totally not racist, classist or a social media troll:\n\n"
 ];
 
@@ -408,7 +408,9 @@ app.all("/tweet", function (request, response) {
   var now = new Date();
   var currentHour = (now.getHours() + 24 - 7) % 24;
   
-  if (currentHour >= 7 && currentHour <= 23) {
+  console.log(`Current hour: ${currentHour}.`)
+  
+  if (currentHour >= 5 || currentHour <= 2) {
     // tweet
     TweetRandomThought(deep_thought_prefixes, deep_thoughts, true /* number_tweets */ );
   }
@@ -424,7 +426,9 @@ app.all("/toby", function (request, response) {
   var now = new Date();
   var currentHour = (now.getHours() + 24 - 7) % 24;
   
-  if (currentHour >= 7 && currentHour <= 23) {
+  console.log(`Current hour: ${currentHour}.`)
+  
+  if (currentHour >= 5 || currentHour <= 2) {
     // tweet
     TweetRandomThought(toby_thaler_prefixes, toby_thaler_quotes, true /* number_tweets */ );
   }
