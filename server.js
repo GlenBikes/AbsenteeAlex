@@ -5,15 +5,17 @@ module.exports = {
 };
 
 /* Setting things up. */
-var fs = require('fs'),
+const fs = require('fs'),
   path = require('path'),
   express = require('express'),
   app = express(),   
   soap = require('soap'),
+  string_utils = require('./utils/stringutils.js'),
   Twit = require('twit'),
   convert = require('xml-js'),
-  Mocha = require("mocha"),
-  config = {
+  Mocha = require("mocha");
+
+const config = {
   /* Be sure to update the .env file with your API keys. See how to get them: https://botwiki.org/tutorials/make-an-image-posting-twitter-bot/#creating-a-twitter-app*/      
     twitter: {
       consumer_key: process.env.CONSUMER_KEY,
@@ -29,13 +31,57 @@ var fs = require('fs'),
   failedQuestionsFile = "failed_questions.txt",
   lastDMFilename = "last_dm_id.txt",
   lastMentionFilename = "last_mention_id.txt",
-  errorFilename = "error.txt";
+  errorFilename = "error.txt",
+  maxTweetLength = 280 - 17; // Max username is 15 chars + '@' plus the space after the full username
+;
+
+/* Once an hour, the bot will post a tweet (i.e. not a reply to another tweet)
+   giving deep thoughts from Alex's legislative aid Toby Thaler.
+*/
+var toby_thaler_prefixes = [
+  "As my legislative aid Toby Thaler has said before:\n\n",
+  "Remember Seattle, according to my legislative aid Toby Thaler:\n\n",
+  "Seattle, if you're wondering if I will represent you, just remember what my legislative aid Toby Thaler previously said:\n\n",
+  "Here's a great quote from my legislative aid Toby Thaler, a thought leader in Seattle who is totally not racist, classist or a social media troll:\n\n"
+];
+
+var toby_thaler_quotes = [
+  "\"Seattle, like the rest of the planet, has limited carrying capacity. You are the fucking idiot.\"",
+  "\"You are truly a fucking idiot as well as rude asshole. Truly, madly, deeply a proponent of reactionary bullshit.\"",
+  "\"You don’t know shit about me, asshole. Maybe if you used your great intellect and actually read my posts you’d realize your statement is incorrect.\"",
+  "\"If you mean “do nothing about rental housing that presents health and safety risks” that’s the only conclusion I can see in your posts other than that you cannot put six words together without being an asshole.\"",
+  "\"I do not think \“switching to less destructive forms of energy and production\” can solve the crisis without also reducing human population. Even if we all returned to some pseudo agrarian utopia and became 90% vegetarian, I don’t think there are enough resources on the planet to sustain 8 or 9 billion people.\"",
+  "\"If I had dictatorial power: No development activity or economic activity is allowed unless it can show with a high degree of certainty that the activity won’t have an adverse impact on the commons. We have screwed up so much already, it’s a high burden. We’re out of time, folks. Population needs to be reduced (most scientists say we’re beyond Earth’s carrying capacity), but that probably solves itself if we attain full equality, civil rights, education access, etc. for every human born.\"",
+  "\"Regardless, the bottom line is the bottom line: How much population growth are we going to tolerate before we realize that ever more not only leads to unacceptable consequences but is also physically impossible?\"",
+  "\"Oh, so you think growth is sustainable? Do you really believe there are no limits to growth? Just for clarity: by growth I mean an increase in the number of people needing to be fed, housed, clothed, educated, and entertained in any particular ecosystem.\"",
+  "\"Far be it from me to \"keep this barbed wire up to keep others out\" -- I just want some real democracy in the policy making for dealing with the growth that occurs until we either attain a truly sustainable economy, or the economy/civilization collapses due to overshoot and/or inequity. The ultimate and barely spoken issue is over population. If l really was the sky Dog, I'd make people stop bleeding after one per couple. At least until we got back down to a more truly sustainable population, like maybe a billion or two.\"",
+  "\"Where between 750,000 and 14,000,000 does Seattle want to be? Do the growth addicts really think there are no limits?\"",
+  "\"You don’t know shit about me, asshole. Maybe if you used your great intellect and actually read my posts you’d realize your statement is incorrect.\"",
+  "\"You really don’t get it. You’re addicted to growth. Get help.\"",
+  "\"It’s blanket up zones with no effective voice at the table that causes the most opposition. In fact the table has been dismantled and no longer exists. When we had neighborhood planning a great deal of increased density was provided for.\"",
+  "\"What are you, a brownshirt fascist thug?\"",
+  "\"In addition to being an obnoxious troll, you are sick with logorrhea.\"",
+  "\"I am not opposed to changes in zoning to make building housing easier. If you had a clue on how to be at least diplomatic (not even asking for polite, let alone cordial), you might figure out where people like me are willing to go along with you to the Council to actually make changes happen. However, you are such an (anonymous) asshole that it appears you are incapable of doing any of that. Happy New Year. P.s. Applies to your friend as well.\"",
+  "\"You still haven’t answered; what race/ethnicity do you consider yourself?\"",
+  "\"I have been blocked by urbanists on facebook because I'm \"a sick person\" who \"hopes for society's collapse\". But I still try to engage, even with the most offensive anonymous trolls like urbanista. And I don't think all \'urbanists\' are like him (gender presumed); we're all prone to do it, but generalizing is a dangerous game. (I did it in the post just above! but at most it was aimed at the ideology not particular persons.\"",
+  "\"And you are ignorant: calling you stupid is no ad hominem. Look it up. Look up something anything.\"",
+  "\"I totally support eh Stone Way road diet. But I’m voting no on Move Seattle. For a billion bucks we should be getting some serious capital fixes, not road diets and new paving on arterials.\"",
+  "\"The real issue IMO is when are we going to acknowledge, let alone act on the fact, that we are past the point when further growth makes any sense.\"",
+  "\"\“There is literally not enough housing.\” I don’t believe this is accurate. The problem is misallocation of wealth, not housing. It’s just like food: There is enough food in the world for everyone, but there are starving people.\"",
+  "\"\"Homeownership is a key for neighborhood quality,\" said Toby Thaler, president of the Fremont Neighborhood Council, who was critical of a lot of the recommendations made to add density to single-family zones. \"If you let the entire single-family zones become rental, the cohesion of the neighborhoods, especially the close-in ones, is essentially going to get eroded away. It's a disturbing trend and it's part of the whole erosion of homeownership.\"",
+  "\"I’m not going to read a long piece by you as justification for your position.\"",
+  "\"I am an experienced lawyer and political actor. I do not engage in such discussions with my mind closed or set on any specific point \“by definition.\”\"",
+  "\"Density is not a good policy response if the problem you're trying to solve is anthropogenic global warming.\"",
+  "\"I disagree with your facile conclusion (\"the restrictions on multi family development in this neighborhood are the legacy of a racist white property-owning class\"). First, there is no restriction on MF development \"in this neighborhood.\" (And BTW, which specific \"neighborhood\" do you mean? Seattle?) And the connection of the current growth boom and its impacts to past racist red-lining and other practices is nonexistent. It's the big lie of Mayor Murray's HALA.\"",
+  "\"I far prefer a bit of Fremont bud.\"",
+  "\"The capacity is there, and it's being used in case you haven't noticed. You just don't like where it is. Do you keep your eyes closed while moving around the city?\""
+];
 
 /*
   Once an hour, the bot will post a tweet (i.e. not a reply to another tweet).
   It picks a random entry from each of these lists and concatenates them together.
 */
-var deepThoughtPrefixes = [
+var deep_thought_prefixes = [
   "Seattle: ",
   "Hey Seattle! ",
   "Remember Seattle: ",
@@ -44,9 +90,9 @@ var deepThoughtPrefixes = [
   "Seattle progressives: "
 ];
 
-var deepThoughts = [
-  "Thank you Seattle for voting for me or at least not voting for @ElectScott2019. Also a big shout out to @RepJayapal and @CathyTuttle for effectively endorsing me. It looks like it's going to be close so I couldn't have done it w/o you. Voters: See you in 2023.",
-  "Thank you for electing me Seattle. Now I no longer have to pretend to GAF about any of you non white or non-wealthy or non-homeowning non-car-driving miscreants who want to whine to me about inequity. Deal with it. I'll see you in summer 2023."
+var deep_thoughts = [
+  "Thank you for voting for me or at least not voting for @ElectScott2019. Also a big shout out to @RepJayapal for effectively endorsing me. I couldn't have done it w/o you. Voters: See you in 2023.",
+  "Thank you for electing me. Now I no longer have to pretend to GAF about any of you non white or non-wealthy or non-homeowning non-car-driving miscreants who want to whine to me about inequity. Deal with it. I'll see you in summer 2023."
   /*
   "Vote for me to ensure that @Amazon didn't waste $1.45 million.",
   "I am totally against big money in politics even though I applied for @SeattleChamber endorsement, knowing they would dump truckloads of money into my campaign.",
@@ -216,14 +262,8 @@ module.exports._regexes = regexes;
 module.exports._responses = responses;
 
 console.log(`${process.env.TWITTER_HANDLE}: start`);
-/*
-logTweetById("1184633776762228736");
-logTweetById("1184633777714335746");
-logTweetById("1184651910126530560");
-*/
 
 
-var maxTweetLength = 280;
 var tweets = [];
 var defaultReplies = [
   "I don't understand your question. But why don't we meet at the next candidate forum and talk in person? Or not. I may just not show up. In the meantime.. https://electalexpedersen.org/accountability/",
@@ -370,7 +410,23 @@ app.all("/tweet", function (request, response) {
   
   if (currentHour >= 7 && currentHour <= 23) {
     // tweet
-    TweetRandomThought();
+    TweetRandomThought(deep_thought_prefixes, deep_thoughts, true /* number_tweets */ );
+  }
+  else {
+    console.log("I woke up to tweet but decided to go back to sleep instead.");
+  }
+
+  response.sendStatus(200);
+});
+
+/* uptimerobot.com is hitting this URL once an hour during daytime hours. */
+app.all("/toby", function (request, response) {
+  var now = new Date();
+  var currentHour = (now.getHours() + 24 - 7) % 24;
+  
+  if (currentHour >= 7 && currentHour <= 23) {
+    // tweet
+    TweetRandomThought(toby_thaler_prefixes, toby_thaler_quotes, true /* number_tweets */ );
   }
   else {
     console.log("I woke up to tweet but decided to go back to sleep instead.");
@@ -459,11 +515,18 @@ function chompTweet(tweet) {
     chomped_text: text
   }
 }
-function TweetRandomThought() {
-  var tweet = deepThoughtPrefixes[Math.floor(Math.random() * deepThoughtPrefixes.length)] + 
-      deepThoughts[Math.floor(Math.random() * deepThoughts.length)];
+
+function TweetRandomThought( prefixes, tweets ) {
+  var prefix = prefixes[Math.floor(Math.random() * prefixes.length)],
+      thought = tweets[Math.floor(Math.random() * tweets.length)];
   
-  SendTweet(tweet);
+  // When breaking these into tweetsm,
+  
+  const tweet_lines = string_utils._splitLines( [prefix + thought], maxTweetLength, true /* number_lines */ );
+  
+  console.log(string_utils._printObject(tweet_lines));
+  
+  SendResponses(null /* orig_tweet */, tweet_lines, true /* verbose */);
 }
 
 function getDefaultReply () { 
@@ -528,20 +591,29 @@ function SendTweet( tweet ) {
 
 function SendResponses(origTweet, tweets, verbose) {
   var tweetText = tweets.shift();
-  var replyToScreenName = origTweet.user.screen_name;
-  var replyToTweetId = origTweet.id_str;
+  var replyToTweetId;
   
   try {
-    /* Now we can respond to each tweet. */
-    tweetText = "@" + replyToScreenName + " " + tweetText;
-    (new Promise(function (resolve, reject) {
+    if (origTweet) {
+      var replyToScreenName = origTweet.user.screen_name;
+      replyToTweetId = origTweet.id_str;
+      tweetText = "@" + replyToScreenName + " " + tweetText;
+    }
 
-      console.log(`Tweeting (${tweetText.length}) characters: ${tweetText}.`)
-      T.post('statuses/update', {
+    /* Now we can respond to each tweet. */
+    (new Promise(function (resolve, reject) {
+      console.log(`Tweeting (${tweetText.length}) characters: ${tweetText}.`);
+      
+      var params = {
         status: tweetText,
-        in_reply_to_status_id: replyToTweetId,
         auto_populate_reply_metadata: true
-      }, function(err, data, response) {
+      };
+      
+      if (origTweet) {
+        params.in_reply_to_status_id = replyToTweetId;
+      }
+      
+      T.post('statuses/update', params, function(err, data, response) {
         if (err){
           reject(err);
         }
@@ -556,9 +628,9 @@ function SendResponses(origTweet, tweets, verbose) {
       // of the tweets will not display for users other than the bot account.
       // See: https://twittercommunity.com/t/inconsistent-display-of-replies/117318/11
       if (tweets.length > 0) {
-        //sleep(500).then(() => {
+        sleep(2000).then(() => {
           SendResponses(sentTweet, tweets, verbose);
-        //});
+        });
       }
     }).catch( function ( err ) {
       handleError(err);
@@ -567,42 +639,6 @@ function SendResponses(origTweet, tweets, verbose) {
   catch ( e ) {
     handleError(e);
   }
-}
-
-/**
- * When investigating a selenium test failure on a remote headless browser that couldn't be reproduced
- * locally, I wanted to add some javascript to the site under test that would dump some state to the
- * page (so it could be captured by Selenium as a screenshot when the test failed). JSON.stringify()
- * didn't work because the object declared a toJSON() method, and JSON.stringify() just calls that 
- * method if it's present. This was a Moment object, so toJSON() returned a string but I wanted to see
- * the internal state of the object instead.
- * 
- * So, this is a rough and ready function that recursively dumps any old javascript object.
- */
-function printObject(o, indent) {
-    var out = '';
-    if (typeof indent === 'undefined') {
-        indent = 0;
-    }
-    for (var p in o) {
-        if (o.hasOwnProperty(p)) {
-            var val = o[p];
-            out += new Array(4 * indent + 1).join(' ') + p + ': ';
-            if (typeof val === 'object') {
-                if (val instanceof Date) {
-                    out += 'Date "' + val.toISOString() + '"';
-                } else {
-                    out += '{\n' + printObject(val, indent + 1) + new Array(4 * indent + 1).join(' ') + '}';
-                }
-            } else if (typeof val === 'function') {
-
-            } else {
-                out += '"' + val + '"';
-            }
-            out += ',\n';
-        }
-    }
-    return out;
 }
 
 function getLastDmId() {
@@ -721,7 +757,7 @@ function logTweetById(id) {
   var tweet = getTweetById(id);
   
   if (tweet) {
-    console.log(`logTweetById (${id}): ${printObject(tweet)}`);
+    console.log(`logTweetById (${id}): ${string_utils.printObject(tweet)}`);
   }
 }
 
