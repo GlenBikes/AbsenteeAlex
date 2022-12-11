@@ -13,7 +13,7 @@
     "@babel/preset-env": "*",
     "@babel/runtime": "*",
     "@babel/plugin-transform-runtime": "*",
-    "express": "^4.14.0",
+    "express": "^4.17.3",
     "interface.js": "^2.0.0",
     "json2html": "*",
     "mocha": "^6.2.1",
